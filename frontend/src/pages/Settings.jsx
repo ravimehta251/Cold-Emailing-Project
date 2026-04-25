@@ -1,0 +1,269 @@
+import React, { useState, useEffect } from 'react';
+import { smtpAPI, userAPI } from '../services/api';
+import { useAuth } from '../context/AuthContext';
+import { useNavigate } from 'react-router-dom';
+
+export default function Settings() {
+  const { logout, user } = useAuth();
+  const navigate = useNavigate();
+
+  const [smtpData, setSmtpData] = useState({ email: '', appPassword: '' });
+  const [userData, setUserData] = useState({ 
+    name: '', phone: '', 
+    githubLink: '', linkedinLink: '', leetcodeLink: '',
+    techSkill: '', keySkill: '', specificArea: '', relevantProject: ''
+  });
+  
+  const [loading, setLoading] = useState(true);
+  
+  const [smtpSaving, setSmtpSaving] = useState(false);
+  const [userSaving, setUserSaving] = useState(false);
+  
+  const [smtpError, setSmtpError] = useState('');
+  const [smtpSuccess, setSmtpSuccess] = useState('');
+  const [userError, setUserError] = useState('');
+  const [userSuccess, setUserSuccess] = useState('');
+
+  const [smtpExists, setSmtpExists] = useState(false);
+  const [isSmtpEditing, setIsSmtpEditing] = useState(false);
+
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  const fetchData = async () => {
+    try {
+      setLoading(true);
+      // Fetch User Details
+      try {
+        const uRes = await userAPI.getMe();
+          setUserData({
+          name: uRes.data.name || '',
+          phone: uRes.data.phone || '',
+          githubLink: uRes.data.githubLink || '',
+          linkedinLink: uRes.data.linkedinLink || '',
+          leetcodeLink: uRes.data.leetcodeLink || '',
+          techSkill: uRes.data.techSkill || '',
+          keySkill: uRes.data.keySkill || '',
+          specificArea: uRes.data.specificArea || '',
+          relevantProject: uRes.data.relevantProject || ''
+        });
+      } catch (err) {
+        console.error("Failed to fetch user details", err);
+      }
+
+      // Fetch SMTP
+      try {
+        const sRes = await smtpAPI.get();
+        if (sRes.data && sRes.data.email) {
+          setSmtpData({ email: sRes.data.email, appPassword: '' });
+          setSmtpExists(true);
+        }
+      } catch (err) {
+        setSmtpExists(false);
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // --- SMTP Handlers ---
+  const handleSmtpChange = (e) => {
+    setSmtpData(prev => ({ ...prev, [e.target.name]: e.target.value }));
+  };
+
+  const handleSmtpSubmit = async (e) => {
+    e.preventDefault();
+    setSmtpSaving(true);
+    setSmtpError('');
+    setSmtpSuccess('');
+
+    if (isSmtpEditing && !smtpData.appPassword) {
+      setSmtpError('Please enter your Gmail App Password to update');
+      setSmtpSaving(false);
+      return;
+    }
+
+    try {
+      await smtpAPI.save(smtpData);
+      setSmtpSuccess(smtpExists && isSmtpEditing ? '✅ SMTP configuration updated!' : '✅ SMTP configuration saved!');
+      setIsSmtpEditing(false);
+      setSmtpData(prev => ({ ...prev, appPassword: '' }));
+      setSmtpExists(true);
+    } catch (err) {
+      setSmtpError(err.response?.data?.message || 'Failed to save SMTP config');
+    } finally {
+      setSmtpSaving(false);
+    }
+  };
+
+  const handleDeleteSmtp = async () => {
+    if (confirm('Are you sure you want to delete your SMTP configuration? You will not be able to send emails until you add it again.')) {
+      try {
+        await smtpAPI.delete();
+        setSmtpExists(false);
+        setSmtpData({ email: '', appPassword: '' });
+        setIsSmtpEditing(false);
+        setSmtpSuccess('✅ SMTP configuration deleted successfully.');
+      } catch (err) {
+        setSmtpError('Failed to delete SMTP configuration.');
+      }
+    }
+  };
+
+  // --- User Handlers ---
+  const handleUserChange = (e) => {
+    setUserData(prev => ({ ...prev, [e.target.name]: e.target.value }));
+  };
+
+  const handleUserSubmit = async (e) => {
+    e.preventDefault();
+    setUserSaving(true);
+    setUserError('');
+    setUserSuccess('');
+
+    try {
+      await userAPI.updateMe(userData);
+      setUserSuccess('✅ User profile updated successfully!');
+      
+      // Update local storage user data partially
+      if (user) {
+         const updatedUser = { ...user, name: userData.name, phone: userData.phone };
+         localStorage.setItem('user', JSON.stringify(updatedUser));
+      }
+    } catch (err) {
+      setUserError('Failed to update user profile');
+    } finally {
+      setUserSaving(false);
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    if (confirm('WARNING: Are you absolutely sure you want to delete your account? All your data, contacts, and logs will be permanently lost!')) {
+      try {
+        await userAPI.deleteMe();
+        logout();
+        navigate('/signup');
+      } catch (err) {
+        setUserError('Failed to delete account');
+      }
+    }
+  };
+
+  if (loading) return <div className="text-center py-10">Loading settings...</div>;
+
+  return (
+    <div className="container mx-auto px-4 py-8 max-w-3xl">
+      <h1 className="text-3xl font-bold mb-8">Account Settings</h1>
+
+      {/* Profile Section */}
+      <div className="bg-white p-6 rounded shadow mb-8">
+        <h2 className="text-2xl font-bold mb-4 border-b pb-2">Profile Details</h2>
+        {userError && <div className="bg-red-100 text-red-600 p-3 rounded mb-4">{userError}</div>}
+        {userSuccess && <div className="bg-green-100 text-green-600 p-3 rounded mb-4">{userSuccess}</div>}
+        
+        <form onSubmit={handleUserSubmit}>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+            <div>
+              <label className="block text-gray-700 font-bold mb-2">Name</label>
+              <input type="text" name="name" value={userData.name} onChange={handleUserChange} className="w-full px-3 py-2 border rounded" required />
+            </div>
+            <div>
+              <label className="block text-gray-700 font-bold mb-2">Phone</label>
+              <input type="tel" name="phone" value={userData.phone} onChange={handleUserChange} className="w-full px-3 py-2 border rounded" required />
+            </div>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+            <div>
+              <label className="block text-gray-700 font-bold mb-2">GitHub Profile Link</label>
+              <input type="url" name="githubLink" value={userData.githubLink} onChange={handleUserChange} className="w-full px-3 py-2 border rounded" placeholder="https://github.com/username" />
+            </div>
+            <div>
+              <label className="block text-gray-700 font-bold mb-2">LinkedIn Profile Link</label>
+              <input type="url" name="linkedinLink" value={userData.linkedinLink} onChange={handleUserChange} className="w-full px-3 py-2 border rounded" placeholder="https://linkedin.com/in/username" />
+            </div>
+          </div>
+          
+          <div className="mb-4">
+            <label className="block text-gray-700 font-bold mb-2">LeetCode Profile Link</label>
+            <input type="url" name="leetcodeLink" value={userData.leetcodeLink} onChange={handleUserChange} className="w-full px-3 py-2 border rounded" placeholder="https://leetcode.com/username" />
+          </div>
+
+          <h3 className="text-xl font-bold mt-6 mb-4 border-b pb-2">Experience & Skills</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+            <div>
+              <label className="block text-gray-700 font-bold mb-2">Primary Tech Skill</label>
+              <input type="text" name="techSkill" value={userData.techSkill} onChange={handleUserChange} className="w-full px-3 py-2 border rounded" placeholder="e.g. React & Node.js" />
+            </div>
+            <div>
+              <label className="block text-gray-700 font-bold mb-2">Key Skill</label>
+              <input type="text" name="keySkill" value={userData.keySkill} onChange={handleUserChange} className="w-full px-3 py-2 border rounded" placeholder="e.g. scalable backend systems" />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+            <div>
+              <label className="block text-gray-700 font-bold mb-2">Specific Area of Interest</label>
+              <input type="text" name="specificArea" value={userData.specificArea} onChange={handleUserChange} className="w-full px-3 py-2 border rounded" placeholder="e.g. cloud infrastructure" />
+            </div>
+            <div>
+              <label className="block text-gray-700 font-bold mb-2">Relevant Project</label>
+              <input type="text" name="relevantProject" value={userData.relevantProject} onChange={handleUserChange} className="w-full px-3 py-2 border rounded" placeholder="e.g. a microservices-based e-commerce platform" />
+            </div>
+          </div>
+
+          <div className="flex justify-between items-center mt-6">
+            <button type="submit" disabled={userSaving} className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 disabled:bg-gray-400">
+              {userSaving ? 'Saving...' : 'Update Profile'}
+            </button>
+            <button type="button" onClick={handleDeleteAccount} className="text-red-600 hover:text-red-800 text-sm font-semibold hover:underline">
+              Delete Account
+            </button>
+          </div>
+        </form>
+      </div>
+
+      {/* SMTP Section */}
+      <div className="bg-white p-6 rounded shadow">
+        <div className="flex justify-between items-center mb-4 border-b pb-2">
+          <h2 className="text-2xl font-bold">Gmail SMTP Configuration</h2>
+          {smtpExists && !isSmtpEditing && (
+             <div className="space-x-3">
+               <button onClick={() => setIsSmtpEditing(true)} className="text-blue-600 hover:underline text-sm font-semibold">Edit</button>
+               <button onClick={handleDeleteSmtp} className="text-red-600 hover:underline text-sm font-semibold">Delete</button>
+             </div>
+          )}
+        </div>
+        
+        {smtpError && <div className="bg-red-100 text-red-600 p-3 rounded mb-4">{smtpError}</div>}
+        {smtpSuccess && <div className="bg-green-100 text-green-600 p-3 rounded mb-4">{smtpSuccess}</div>}
+
+        <form onSubmit={handleSmtpSubmit}>
+          <div className="mb-4">
+            <label className="block text-gray-700 font-bold mb-2">Gmail Address</label>
+            <input type="email" name="email" value={smtpData.email} onChange={handleSmtpChange} disabled={smtpExists && !isSmtpEditing} className="w-full px-3 py-2 border rounded disabled:bg-gray-100" placeholder="your-email@gmail.com" required />
+          </div>
+
+          <div className="mb-6">
+            <label className="block text-gray-700 font-bold mb-2">App Password</label>
+            <input type="password" name="appPassword" value={smtpData.appPassword} onChange={handleSmtpChange} disabled={smtpExists && !isSmtpEditing} className="w-full px-3 py-2 border rounded disabled:bg-gray-100" placeholder={smtpExists && !isSmtpEditing ? '••••••••' : '16-character App Password'} required={!smtpExists || isSmtpEditing} />
+          </div>
+
+          {(!smtpExists || isSmtpEditing) && (
+            <div className="flex space-x-3">
+              <button type="submit" disabled={smtpSaving} className="flex-1 bg-blue-600 text-white py-2 rounded hover:bg-blue-700">
+                {smtpSaving ? 'Saving...' : 'Save Configuration'}
+              </button>
+              {smtpExists && (
+                <button type="button" onClick={() => {setIsSmtpEditing(false); setSmtpData(prev => ({...prev, appPassword: ''}))}} className="flex-1 bg-gray-500 text-white py-2 rounded hover:bg-gray-600">
+                  Cancel
+                </button>
+              )}
+            </div>
+          )}
+        </form>
+      </div>
+    </div>
+  );
+}
