@@ -84,29 +84,90 @@ public class ContactService {
         log.info("Bulk uploading contacts for user: {}", userId);
 
         List<Contact> contacts = new ArrayList<>();
-        CSVParser csvParser = new CSVParser(reader, CSVFormat.DEFAULT.withFirstRecordAsHeader());
+        
+        try (CSVParser csvParser = new CSVParser(reader, CSVFormat.DEFAULT
+                .withFirstRecordAsHeader()
+                .withIgnoreEmptyLines()
+                .withTrim())) {
 
-        for (CSVRecord record : csvParser) {
-            Contact contact = new Contact();
-            contact.setUserId(userId);
-            contact.setName(record.get("name"));
-            contact.setCompany(record.get("company"));
-            contact.setRole(record.get("role"));
-            contact.setEmail(record.get("email"));
-            contact.setCreatedAt(LocalDateTime.now());
-            contact.setUpdatedAt(LocalDateTime.now());
+            int rowNumber = 2; // Start from 2 (header is 1)
+            
+            for (CSVRecord record : csvParser) {
+                try {
+                    // Get values and handle case-insensitive headers
+                    String name = getCSVValue(record, "name");
+                    String email = getCSVValue(record, "email");
+                    String company = getCSVValue(record, "company");
+                    String role = getCSVValue(record, "role");
 
-            contacts.add(contact);
+                    // Validate required fields
+                    if (name == null || name.trim().isEmpty()) {
+                        log.warn("Skipping row {} - missing name", rowNumber);
+                        rowNumber++;
+                        continue;
+                    }
+                    if (email == null || email.trim().isEmpty()) {
+                        log.warn("Skipping row {} - missing email", rowNumber);
+                        rowNumber++;
+                        continue;
+                    }
+
+                    // Create contact
+                    Contact contact = new Contact();
+                    contact.setUserId(userId);
+                    contact.setName(name.trim());
+                    contact.setEmail(email.trim());
+                    contact.setCompany(company != null ? company.trim() : "");
+                    contact.setRole(role != null ? role.trim() : "");
+                    contact.setCreatedAt(LocalDateTime.now());
+                    contact.setUpdatedAt(LocalDateTime.now());
+
+                    contacts.add(contact);
+                    log.debug("Added contact from row {}: {}", rowNumber, email);
+                    
+                } catch (Exception e) {
+                    log.warn("Error parsing row {}: {}", rowNumber, e.getMessage());
+                }
+                rowNumber++;
+            }
+
+            if (contacts.isEmpty()) {
+                throw new RuntimeException("No valid contacts found in CSV. Ensure CSV has columns: name, email, company (optional), role (optional)");
+            }
+
+            List<Contact> saved = contactRepository.saveAll(contacts);
+            log.info("Bulk uploaded {} contacts for user {}", saved.size(), userId);
+
+            return saved.stream()
+                .map(this::mapToResponse)
+                .collect(Collectors.toList());
+                
+        } catch (IOException e) {
+            log.error("Error reading CSV file", e);
+            throw new RuntimeException("Error reading CSV file: " + e.getMessage(), e);
         }
+    }
 
-        csvParser.close();
-
-        List<Contact> saved = contactRepository.saveAll(contacts);
-        log.info("Bulk uploaded {} contacts", saved.size());
-
-        return saved.stream()
-            .map(this::mapToResponse)
-            .collect(Collectors.toList());
+    /**
+     * Get CSV value by header name, case-insensitive
+     */
+    private String getCSVValue(CSVRecord record, String headerName) {
+        try {
+            // Try exact match first
+            if (record.isMapped(headerName)) {
+                return record.get(headerName);
+            }
+            
+            // Try case-insensitive search
+            for (String header : record.getParser().getHeaderMap().keySet()) {
+                if (header.equalsIgnoreCase(headerName)) {
+                    return record.get(header);
+                }
+            }
+        } catch (Exception e) {
+            log.debug("Could not get value for header {}", headerName);
+        }
+        return null;
     }
 
     public List<Contact> getContactsForUser(String userId) {

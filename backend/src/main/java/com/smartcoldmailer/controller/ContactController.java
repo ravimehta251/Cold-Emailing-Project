@@ -70,16 +70,48 @@ public class ContactController {
     }
 
     @PostMapping("/bulk-upload")
-    public ResponseEntity<List<ContactResponse>> bulkUploadContacts(@RequestParam MultipartFile file) {
+    public ResponseEntity<?> bulkUploadContacts(@RequestParam("file") MultipartFile file) {
         String userId = getCurrentUserId();
-        log.info("Bulk uploading contacts for user: {}", userId);
+        
+        // Validate file
+        if (file == null || file.isEmpty()) {
+            log.error("No file provided for bulk upload");
+            return ResponseEntity.badRequest().body(new ErrorResponse("No file provided"));
+        }
+        
+        if (!file.getOriginalFilename().toLowerCase().endsWith(".csv")) {
+            log.error("Invalid file type: {}", file.getOriginalFilename());
+            return ResponseEntity.badRequest().body(new ErrorResponse("File must be CSV format"));
+        }
+        
+        log.info("Bulk uploading file: {} for user: {}", file.getOriginalFilename(), userId);
+        
         try {
             InputStreamReader reader = new InputStreamReader(file.getInputStream());
             List<ContactResponse> response = contactService.bulkUploadContacts(userId, reader);
-            return ResponseEntity.ok(response);
+            log.info("Successfully uploaded {} contacts", response.size());
+            return ResponseEntity.ok(new BulkUploadResponse(response.size(), response));
         } catch (Exception e) {
             log.error("Error uploading contacts", e);
-            throw new RuntimeException("Error uploading contacts", e);
+            return ResponseEntity.internalServerError().body(
+                new ErrorResponse("Error uploading contacts: " + e.getMessage())
+            );
         }
+    }
+
+    // Helper classes
+    @lombok.Data
+    @lombok.NoArgsConstructor
+    @lombok.AllArgsConstructor
+    public static class ErrorResponse {
+        private String message;
+    }
+
+    @lombok.Data
+    @lombok.NoArgsConstructor
+    @lombok.AllArgsConstructor
+    public static class BulkUploadResponse {
+        private int uploadedCount;
+        private List<ContactResponse> contacts;
     }
 }

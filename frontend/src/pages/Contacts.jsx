@@ -72,12 +72,26 @@ export default function Contacts() {
     const file = e.target.files?.[0];
     if (!file) return;
 
+    // Validate file type
+    if (!file.name.toLowerCase().endsWith('.csv')) {
+      setError('Please upload a CSV file');
+      return;
+    }
+
+    setLoading(true);
+    setError('');
+
     try {
       const response = await contactAPI.bulkUpload(file);
-      setContacts([...contacts, ...response.data]);
-      alert('Contacts uploaded successfully!');
+      setContacts([...contacts, ...response.data.contacts]);
+      alert(`✅ Successfully uploaded ${response.data.uploadedCount} contacts!`);
+      e.target.value = ''; // Reset file input
     } catch (err) {
-      setError('Failed to upload contacts');
+      const errorMsg = err.response?.data?.message || 'Failed to upload contacts. Check CSV format.';
+      setError(errorMsg);
+      console.error('Bulk upload error:', err);
+    } finally {
+      setLoading(false);
     }
   };
 

@@ -64,9 +64,6 @@ public class SecurityConfig {
         http
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             .csrf(csrf -> csrf.disable())
-            .exceptionHandling(exception -> 
-                exception.authenticationEntryPoint(jwtAuthenticationEntryPoint)
-            )
             .sessionManagement(session -> 
                 session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
             )
@@ -74,12 +71,13 @@ public class SecurityConfig {
                 authz
                     // Public endpoints - no authentication required
                     .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                    .requestMatchers("/api/auth/signup").permitAll()
-                    .requestMatchers("/api/auth/login").permitAll()
                     .requestMatchers("/api/auth/**").permitAll()
                     .requestMatchers("/api/public/**").permitAll()
                     // All other endpoints require authentication
                     .anyRequest().authenticated()
+            )
+            .exceptionHandling(exception -> 
+                exception.authenticationEntryPoint(jwtAuthenticationEntryPoint)
             );
 
         http.addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class);
