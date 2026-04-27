@@ -11,6 +11,10 @@ import com.smartcoldmailer.util.EmailTemplateEngine;
 import com.smartcoldmailer.util.EmailSenderUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
@@ -237,6 +241,35 @@ public class EmailService {
             .stream()
             .map(this::mapToResponse)
             .collect(Collectors.toList());
+    }
+
+    /**
+     * Get paginated email logs (50 items per page)
+     * Returns most recent emails first
+     */
+    public Map<String, Object> getEmailLogsPaginated(String userId, int page) {
+        log.info("Fetching paginated email logs for user: {} - page: {}", userId, page);
+        
+        int pageSize = 50;
+        Pageable pageable = PageRequest.of(page, pageSize, Sort.by("sentAt").descending());
+        
+        Page<EmailLog> emailLogs = emailLogRepository.findByUserId(userId, pageable);
+        
+        List<EmailLogResponse> content = emailLogs.getContent().stream()
+            .map(this::mapToResponse)
+            .collect(Collectors.toList());
+        
+        // Create response map
+        Map<String, Object> response = new java.util.HashMap<>();
+        response.put("content", content);
+        response.put("currentPage", page);
+        response.put("totalPages", emailLogs.getTotalPages());
+        response.put("totalElements", emailLogs.getTotalElements());
+        response.put("hasNext", emailLogs.hasNext());
+        response.put("hasPrevious", emailLogs.hasPrevious());
+        response.put("pageSize", pageSize);
+        
+        return response;
     }
 
     public long getTotalEmailsSent(String userId) {

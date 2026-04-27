@@ -41,6 +41,7 @@ export const smtpAPI = {
 export const contactAPI = {
   create: (data) => api.post('/contacts', data),
   getAll: () => api.get('/contacts'),
+  getAllPaginated: (page = 0) => api.get('/contacts/paginated', { params: { page } }),
   get: (id) => api.get(`/contacts/${id}`),
   update: (id, data) => api.put(`/contacts/${id}`, data),
   delete: (id) => api.delete(`/contacts/${id}`),
@@ -65,6 +66,7 @@ export const templateAPI = {
 export const emailAPI = {
   sendBulk: (data) => api.post('/email/send-all', data),
   getLogs: () => api.get('/email/logs'),
+  getLogsPaginated: (page = 0) => api.get('/email/logs/paginated', { params: { page } }),
   getStats: () => api.get('/email/stats'),
   getSessionProgress: (sessionId) => api.get(`/email/session/${sessionId}`),
 };

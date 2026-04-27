@@ -7,6 +7,7 @@ import Signup from './pages/Signup';
 import Dashboard from './pages/Dashboard';
 import Contacts from './pages/Contacts';
 import SendEmails from './pages/SendEmails';
+import EmailHistory from './pages/EmailHistory';
 import Settings from './pages/Settings';
 import './index.css';
 
@@ -29,6 +30,7 @@ function AppContent() {
         <Route path="/dashboard" element={<ProtectedRoute element={<Dashboard />} />} />
         <Route path="/contacts" element={<ProtectedRoute element={<Contacts />} />} />
         <Route path="/send-emails" element={<ProtectedRoute element={<SendEmails />} />} />
+        <Route path="/email-history" element={<ProtectedRoute element={<EmailHistory />} />} />
         <Route path="/settings" element={<ProtectedRoute element={<Settings />} />} />
         <Route path="/" element={token ? <Navigate to="/dashboard" replace /> : <Navigate to="/login" replace />} />
       </Routes>

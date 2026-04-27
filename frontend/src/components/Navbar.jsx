@@ -34,6 +34,7 @@ export default function Navbar() {
             <a href="/dashboard" className="hover:bg-blue-700 px-3 py-2 rounded">Dashboard</a>
             <a href="/contacts" className="hover:bg-blue-700 px-3 py-2 rounded">Contacts</a>
             <a href="/send-emails" className="bg-white text-blue-600 hover:bg-gray-100 px-3 py-2 rounded font-bold">Send Emails</a>
+            <a href="/email-history" className="hover:bg-blue-700 px-3 py-2 rounded">📧 History</a>
             <a href="/settings" className="hover:bg-blue-700 px-3 py-2 rounded">Settings</a>
             {token && (
               <button

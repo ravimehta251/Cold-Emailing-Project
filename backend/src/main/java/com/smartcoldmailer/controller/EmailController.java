@@ -76,6 +76,19 @@ public class EmailController {
         return ResponseEntity.ok(response);
     }
 
+    @GetMapping("/logs/paginated")
+    public ResponseEntity<Map<String, Object>> getEmailLogsPaginated(@RequestParam(defaultValue = "0") int page) {
+        String userId = getCurrentUserId();
+        log.info("Fetching paginated email logs for user: {} - page: {}", userId, page);
+        
+        if (page < 0) {
+            page = 0;
+        }
+        
+        Map<String, Object> response = emailService.getEmailLogsPaginated(userId, page);
+        return ResponseEntity.ok(response);
+    }
+
     @GetMapping("/stats")
     public ResponseEntity<DashboardStatsResponse> getDashboardStats() {
         String userId = getCurrentUserId();

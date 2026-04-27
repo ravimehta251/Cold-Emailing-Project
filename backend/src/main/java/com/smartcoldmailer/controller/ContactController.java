@@ -54,6 +54,19 @@ public class ContactController {
         return ResponseEntity.ok(response);
     }
 
+    @GetMapping("/paginated")
+    public ResponseEntity<Map<String, Object>> getContactsPaginated(@RequestParam(defaultValue = "0") int page) {
+        String userId = getCurrentUserId();
+        log.info("Fetching paginated contacts for user: {} - page: {}", userId, page);
+        
+        if (page < 0) {
+            page = 0;
+        }
+        
+        Map<String, Object> response = contactService.getContactsPaginated(userId, page);
+        return ResponseEntity.ok(response);
+    }
+
     @PutMapping("/{contactId}")
     public ResponseEntity<ContactResponse> updateContact(@PathVariable String contactId,
                                                          @Valid @RequestBody ContactRequest request) {

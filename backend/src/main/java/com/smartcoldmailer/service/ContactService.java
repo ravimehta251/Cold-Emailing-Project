@@ -6,6 +6,10 @@ import com.smartcoldmailer.model.Contact;
 import com.smartcoldmailer.repository.ContactRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
@@ -16,6 +20,7 @@ import java.io.Reader;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -56,6 +61,35 @@ public class ContactService {
             .stream()
             .map(this::mapToResponse)
             .collect(Collectors.toList());
+    }
+
+    /**
+     * Get paginated contacts (50 items per page)
+     * Returns contacts sorted by creation date (newest first)
+     */
+    public Map<String, Object> getContactsPaginated(String userId, int page) {
+        log.info("Fetching paginated contacts for user: {} - page: {}", userId, page);
+        
+        int pageSize = 50;
+        Pageable pageable = PageRequest.of(page, pageSize, Sort.by("createdAt").descending());
+        
+        Page<Contact> contacts = contactRepository.findByUserId(userId, pageable);
+        
+        List<ContactResponse> content = contacts.getContent().stream()
+            .map(this::mapToResponse)
+            .collect(Collectors.toList());
+        
+        // Create response map
+        Map<String, Object> response = new java.util.HashMap<>();
+        response.put("content", content);
+        response.put("currentPage", page);
+        response.put("totalPages", contacts.getTotalPages());
+        response.put("totalElements", contacts.getTotalElements());
+        response.put("hasNext", contacts.hasNext());
+        response.put("hasPrevious", contacts.hasPrevious());
+        response.put("pageSize", pageSize);
+        
+        return response;
     }
 
     public ContactResponse updateContact(String contactId, ContactRequest request) {
