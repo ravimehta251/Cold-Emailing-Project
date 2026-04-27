@@ -14,6 +14,7 @@ import org.springframework.web.multipart.MultipartFile;
 import jakarta.validation.Valid;
 import java.io.InputStreamReader;
 import java.util.List;
+import java.util.Map;
 import com.smartcoldmailer.security.UserPrincipal;
 
 @Slf4j
