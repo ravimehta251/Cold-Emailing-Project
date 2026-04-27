@@ -3,7 +3,7 @@ package com.smartcoldmailer.dto;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
+// DTO for authentication response
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
