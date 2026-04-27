@@ -29,6 +29,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                                     HttpServletResponse response, 
                                     FilterChain filterChain) 
             throws ServletException, IOException {
+        // Skip JWT filter for CORS preflight requests
+        if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+
         try {
             String jwt = getJwtFromRequest(request);
 
@@ -42,6 +48,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     );
                 authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                 SecurityContextHolder.getContext().setAuthentication(authentication);
+                log.debug("Set user authentication for user: {}", userId);
             }
         } catch (Exception ex) {
             log.error("Could not set user authentication in security context", ex);
