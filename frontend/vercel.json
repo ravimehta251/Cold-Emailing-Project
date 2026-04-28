@@ -3,10 +3,6 @@
   "installCommand": "npm install",
   "outputDirectory": "dist",
   "framework": "vite",
-  "env": {
-    "VITE_APP_ENV": "@vite_app_env",
-    "VITE_API_URL": "@vite_api_url"
-  },
   "headers": [
     {
       "source": "/api/:path*",
