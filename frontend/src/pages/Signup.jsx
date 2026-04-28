@@ -59,9 +59,24 @@ export default function Signup() {
         
         {/* Disclaimer */}
         <div className="bg-blue-50 border border-blue-200 rounded p-4 mb-6">
-          <p className="text-sm text-blue-900">
+          <p className="text-sm text-blue-900 mb-3">
             <strong>📌 Important:</strong> After signing up, you'll be able to configure your Gmail SMTP settings and add your resume link in the Settings page. These are required to start sending emails.
           </p>
+          <details className="cursor-pointer">
+            <summary className="text-sm font-semibold text-blue-900 hover:text-blue-700">📋 How to get Gmail App Password (click to expand)</summary>
+            <div className="mt-3 space-y-2 text-sm text-blue-800 bg-white rounded p-3">
+              <ol className="list-decimal list-inside space-y-1">
+                <li>Go to <a href="https://myaccount.google.com/security" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline font-semibold">myaccount.google.com/security</a></li>
+                <li>Enable <strong>2-Step Verification</strong> if not already enabled</li>
+                <li>Scroll down and select <strong>"App passwords"</strong></li>
+                <li>Choose <strong>"Mail"</strong> as the app type</li>
+                <li>Choose <strong>"Windows Computer"</strong> (or your device type)</li>
+                <li>Google will generate a <strong>16-character password</strong></li>
+                <li>Copy this password and save it for later</li>
+                <li>After signup, go to Settings and paste it in the App Password field</li>
+              </ol>
+            </div>
+          </details>
         </div>
 
         <form onSubmit={handleSubmit}>

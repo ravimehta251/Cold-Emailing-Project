@@ -188,8 +188,9 @@ export default function Settings() {
           
           <div className="mb-4">
             <label className="block text-gray-700 font-bold mb-2">LeetCode Profile Link</label>
-            <inp
-
+            <input type="url" name="leetcodeLink" value={userData.leetcodeLink} onChange={handleUserChange} className="w-full px-3 py-2 border rounded" placeholder="https://leetcode.com/username" />
+          </div>
+          
           <div className="mb-4">
             <label className="block text-gray-700 font-bold mb-2">Resume Link</label>
             <input type="url" name="resumeLink" value={userData.resumeLink} onChange={handleUserChange} className="w-full px-3 py-2 border rounded" placeholder="https://drive.google.com/file/d/..." />
@@ -204,7 +205,6 @@ export default function Settings() {
               <br />
               4. Copy the shareable link and paste it here
             </p>
-          </div>ut type="url" name="leetcodeLink" value={userData.leetcodeLink} onChange={handleUserChange} className="w-full px-3 py-2 border rounded" placeholder="https://leetcode.com/username" />
           </div>
 
           <h3 className="text-xl font-bold mt-6 mb-4 border-b pb-2">Experience & Skills</h3>
@@ -240,13 +240,7 @@ export default function Settings() {
           </div>
         </form>
       </div>
-div className="bg-blue-50 border border-blue-200 rounded p-4 mb-6">
-          <p className="text-sm text-blue-900">
-            <strong>⚠️ Disclaimer:</strong> Your SMTP credentials (email and password) are securely encrypted and stored on our servers. We never use your credentials for any purpose other than sending emails on your behalf. You can delete your SMTP configuration at any time.
-          </p>
-        </div>
 
-        <
       {/* SMTP Section */}
       <div className="bg-white p-6 rounded shadow">
         <div className="flex justify-between items-center mb-4 border-b pb-2">
@@ -262,6 +256,12 @@ div className="bg-blue-50 border border-blue-200 rounded p-4 mb-6">
         {smtpError && <div className="bg-red-100 text-red-600 p-3 rounded mb-4">{smtpError}</div>}
         {smtpSuccess && <div className="bg-green-100 text-green-600 p-3 rounded mb-4">{smtpSuccess}</div>}
 
+        <div className="bg-blue-50 border border-blue-200 rounded p-4 mb-6">
+          <p className="text-sm text-blue-900">
+            <strong>⚠️ Disclaimer:</strong> Your SMTP credentials (email and password) are securely encrypted and stored on our servers. We never use your credentials for any purpose other than sending emails on your behalf. You can delete your SMTP configuration at any time.
+          </p>
+        </div>
+
         <form onSubmit={handleSmtpSubmit}>
           <div className="mb-4">
             <label className="block text-gray-700 font-bold mb-2">Gmail Address</label>
@@ -271,6 +271,18 @@ div className="bg-blue-50 border border-blue-200 rounded p-4 mb-6">
           <div className="mb-6">
             <label className="block text-gray-700 font-bold mb-2">App Password</label>
             <input type="password" name="appPassword" value={smtpData.appPassword} onChange={handleSmtpChange} disabled={smtpExists && !isSmtpEditing} className="w-full px-3 py-2 border rounded disabled:bg-gray-100" placeholder={smtpExists && !isSmtpEditing ? '••••••••' : '16-character App Password'} required={!smtpExists || isSmtpEditing} />
+            <div className="bg-gray-50 border border-gray-200 rounded p-4 mt-3">
+              <p className="text-sm text-gray-700 font-semibold mb-2">📋 How to get your Gmail App Password:</p>
+              <ol className="text-sm text-gray-600 space-y-2 list-decimal list-inside">
+                <li>Go to <a href="https://myaccount.google.com/security" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">myaccount.google.com/security</a></li>
+                <li>Enable 2-Step Verification (if not already enabled)</li>
+                <li>Scroll down and click "App passwords"</li>
+                <li>Select "Mail" as the app and "Windows Computer" (or your device) as the device</li>
+                <li>Google will generate a 16-character password</li>
+                <li>Copy this password and paste it in the "App Password" field above</li>
+                <li>Click "Save Configuration" to store it securely</li>
+              </ol>
+            </div>
           </div>
 
           {(!smtpExists || isSmtpEditing) && (
