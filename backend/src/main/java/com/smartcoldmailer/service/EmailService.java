@@ -5,6 +5,7 @@ import com.smartcoldmailer.model.Contact;
 import com.smartcoldmailer.model.EmailLog;
 import com.smartcoldmailer.model.EmailTemplate;
 import com.smartcoldmailer.model.BulkEmailSession;
+import com.smartcoldmailer.model.SMTPConfig;
 import com.smartcoldmailer.repository.EmailLogRepository;
 import com.smartcoldmailer.repository.BulkEmailSessionRepository;
 import com.smartcoldmailer.util.EmailTemplateEngine;
@@ -61,8 +62,21 @@ public class EmailService {
         log.info("Starting bulk email sending for user: {}", userId);
         
         try {
-            // Get user's SMTP config
-            String smtpEmail = smtpConfigService.getSMTPConfig(userId).getEmail();
+            // Validate SMTP config exists
+            SMTPConfig smtpConfig;
+            try {
+                smtpConfig = smtpConfigService.getSMTPConfigEntity(userId);
+            } catch (Exception e) {
+                String errorMsg = "SMTP configuration not found. Please configure your SMTP settings before sending emails.";
+                log.error(errorMsg);
+                session.setStatus(BulkEmailSession.SessionStatus.FAILED);
+                session.setErrorMessage(errorMsg);
+                session.setCompletedAt(LocalDateTime.now());
+                bulkEmailSessionRepository.save(session);
+                return;
+            }
+
+            String smtpEmail = smtpConfig.getEmail();
             String smtpPassword = smtpConfigService.getDecryptedPassword(userId);
 
             // Get template (optional if overrides provided)
@@ -75,11 +89,23 @@ public class EmailService {
                 }
             }
 
-            List<Contact> contacts = contactService.getContactsForUser(userId);
+            List<Contact> contacts = contactService.getAllContactsShared();
             if (contactIds != null && !contactIds.isEmpty()) {
                 contacts = contacts.stream()
                                    .filter(c -> contactIds.contains(c.getId()))
                                    .collect(Collectors.toList());
+            }
+
+            // Validate contacts exist
+            if (contacts.isEmpty()) {
+                String errorMsg = "No contacts found to send emails to. Please add contacts first.";
+                log.error(errorMsg);
+                session.setTotalEmails(0);
+                session.setStatus(BulkEmailSession.SessionStatus.COMPLETED);
+                session.setErrorMessage(errorMsg);
+                session.setCompletedAt(LocalDateTime.now());
+                bulkEmailSessionRepository.save(session);
+                return;
             }
 
             session.setTotalEmails(contacts.size());

@@ -208,6 +208,14 @@ public class ContactService {
         return contactRepository.findByUserId(userId);
     }
 
+    /**
+     * Get all contacts (shared to all users for sending emails)
+     * This is used when sending bulk emails - all authenticated users can send to all contacts
+     */
+    public List<Contact> getAllContactsShared() {
+        return contactRepository.findAll();
+    }
+
     private ContactResponse mapToResponse(Contact contact) {
         ContactResponse response = new ContactResponse();
         response.setId(contact.getId());
