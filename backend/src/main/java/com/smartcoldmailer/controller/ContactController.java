@@ -49,22 +49,20 @@ public class ContactController {
 
     @GetMapping
     public ResponseEntity<List<ContactResponse>> getAllContacts() {
-        String userId = getCurrentUserId();
-        log.info("Fetching all contacts for user: {}", userId);
-        List<ContactResponse> response = contactService.getAllContacts(userId);
+        log.info("Fetching all contacts (visible to all authenticated users)");
+        List<ContactResponse> response = contactService.getAllContacts("");
         return ResponseEntity.ok(response);
     }
 
     @GetMapping("/paginated")
     public ResponseEntity<Map<String, Object>> getContactsPaginated(@RequestParam(defaultValue = "0") int page) {
-        String userId = getCurrentUserId();
-        log.info("Fetching paginated contacts for user: {} - page: {}", userId, page);
+        log.info("Fetching paginated contacts (visible to all authenticated users) - page: {}", page);
         
         if (page < 0) {
             page = 0;
         }
         
-        Map<String, Object> response = contactService.getContactsPaginated(userId, page);
+        Map<String, Object> response = contactService.getContactsPaginated("", page);
         return ResponseEntity.ok(response);
     }
 

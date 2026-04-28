@@ -55,9 +55,9 @@ public class ContactService {
     }
 
     public List<ContactResponse> getAllContacts(String userId) {
-        log.info("Fetching all contacts for user: {}", userId);
+        log.info("Fetching all contacts (shared to all users)");
 
-        return contactRepository.findByUserId(userId)
+        return contactRepository.findAll()
             .stream()
             .map(this::mapToResponse)
             .collect(Collectors.toList());
@@ -65,15 +65,15 @@ public class ContactService {
 
     /**
      * Get paginated contacts (50 items per page)
-     * Returns contacts sorted by creation date (newest first)
+     * Returns contacts sorted by creation date (newest first) - shared to all authenticated users
      */
     public Map<String, Object> getContactsPaginated(String userId, int page) {
-        log.info("Fetching paginated contacts for user: {} - page: {}", userId, page);
+        log.info("Fetching paginated contacts for all users - page: {}", page);
         
         int pageSize = 50;
         Pageable pageable = PageRequest.of(page, pageSize, Sort.by("createdAt").descending());
         
-        Page<Contact> contacts = contactRepository.findByUserId(userId, pageable);
+        Page<Contact> contacts = contactRepository.findAll(pageable);
         
         List<ContactResponse> content = contacts.getContent().stream()
             .map(this::mapToResponse)

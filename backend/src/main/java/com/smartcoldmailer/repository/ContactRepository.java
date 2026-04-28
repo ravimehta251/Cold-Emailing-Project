@@ -10,7 +10,13 @@ import java.util.List;
 
 @Repository
 public interface ContactRepository extends MongoRepository<Contact, String> {
+    // User-specific queries (kept for backward compatibility)
     List<Contact> findByUserId(String userId);
     Page<Contact> findByUserId(String userId, Pageable pageable);
     long countByUserId(String userId);
+    
+    // Global queries (all contacts visible to authenticated users)
+    @Override
+    List<Contact> findAll();
+    Page<Contact> findAll(Pageable pageable);
 }
