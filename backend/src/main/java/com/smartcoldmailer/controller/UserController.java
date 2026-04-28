@@ -41,6 +41,7 @@ public class UserController {
                     if (updates.containsKey("githubLink")) user.setGithubLink(updates.get("githubLink"));
                     if (updates.containsKey("linkedinLink")) user.setLinkedinLink(updates.get("linkedinLink"));
                     if (updates.containsKey("leetcodeLink")) user.setLeetcodeLink(updates.get("leetcodeLink"));
+                    if (updates.containsKey("resumeLink")) user.setResumeLink(updates.get("resumeLink"));
                     if (updates.containsKey("techSkill")) user.setTechSkill(updates.get("techSkill"));
                     if (updates.containsKey("keySkill")) user.setKeySkill(updates.get("keySkill"));
                     if (updates.containsKey("specificArea")) user.setSpecificArea(updates.get("specificArea"));

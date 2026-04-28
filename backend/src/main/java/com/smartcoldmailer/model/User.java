@@ -22,6 +22,7 @@ public class User {
     private String githubLink;
     private String linkedinLink;
     private String leetcodeLink;
+    private String resumeLink;
     private String techSkill;
     private String keySkill;
     private String specificArea;

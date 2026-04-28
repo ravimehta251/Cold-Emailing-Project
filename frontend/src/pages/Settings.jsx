@@ -10,7 +10,7 @@ export default function Settings() {
   const [smtpData, setSmtpData] = useState({ email: '', appPassword: '' });
   const [userData, setUserData] = useState({ 
     name: '', phone: '', 
-    githubLink: '', linkedinLink: '', leetcodeLink: '',
+    githubLink: '', linkedinLink: '', leetcodeLink: '', resumeLink: '',
     techSkill: '', keySkill: '', specificArea: '', relevantProject: ''
   });
   
@@ -43,6 +43,7 @@ export default function Settings() {
           githubLink: uRes.data.githubLink || '',
           linkedinLink: uRes.data.linkedinLink || '',
           leetcodeLink: uRes.data.leetcodeLink || '',
+          resumeLink: uRes.data.resumeLink || '',
           techSkill: uRes.data.techSkill || '',
           keySkill: uRes.data.keySkill || '',
           specificArea: uRes.data.specificArea || '',
@@ -187,7 +188,23 @@ export default function Settings() {
           
           <div className="mb-4">
             <label className="block text-gray-700 font-bold mb-2">LeetCode Profile Link</label>
-            <input type="url" name="leetcodeLink" value={userData.leetcodeLink} onChange={handleUserChange} className="w-full px-3 py-2 border rounded" placeholder="https://leetcode.com/username" />
+            <inp
+
+          <div className="mb-4">
+            <label className="block text-gray-700 font-bold mb-2">Resume Link</label>
+            <input type="url" name="resumeLink" value={userData.resumeLink} onChange={handleUserChange} className="w-full px-3 py-2 border rounded" placeholder="https://drive.google.com/file/d/..." />
+            <p className="text-sm text-gray-600 mt-2">
+              <strong>How to get your resume link:</strong>
+              <br />
+              1. Upload your resume to Google Drive
+              <br />
+              2. Right-click the file → Share
+              <br />
+              3. Set to "Anyone with the link can view"
+              <br />
+              4. Copy the shareable link and paste it here
+            </p>
+          </div>ut type="url" name="leetcodeLink" value={userData.leetcodeLink} onChange={handleUserChange} className="w-full px-3 py-2 border rounded" placeholder="https://leetcode.com/username" />
           </div>
 
           <h3 className="text-xl font-bold mt-6 mb-4 border-b pb-2">Experience & Skills</h3>
@@ -223,7 +240,13 @@ export default function Settings() {
           </div>
         </form>
       </div>
+div className="bg-blue-50 border border-blue-200 rounded p-4 mb-6">
+          <p className="text-sm text-blue-900">
+            <strong>⚠️ Disclaimer:</strong> Your SMTP credentials (email and password) are securely encrypted and stored on our servers. We never use your credentials for any purpose other than sending emails on your behalf. You can delete your SMTP configuration at any time.
+          </p>
+        </div>
 
+        <
       {/* SMTP Section */}
       <div className="bg-white p-6 rounded shadow">
         <div className="flex justify-between items-center mb-4 border-b pb-2">

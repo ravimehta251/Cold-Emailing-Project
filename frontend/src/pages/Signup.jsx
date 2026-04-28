@@ -56,6 +56,14 @@ export default function Signup() {
       <div className="bg-white p-8 rounded shadow-md w-full max-w-md">
         <h2 className="text-2xl font-bold mb-6 text-center">Sign Up</h2>
         {error && <div className="bg-red-100 text-red-600 p-3 rounded mb-4">{error}</div>}
+        
+        {/* Disclaimer */}
+        <div className="bg-blue-50 border border-blue-200 rounded p-4 mb-6">
+          <p className="text-sm text-blue-900">
+            <strong>📌 Important:</strong> After signing up, you'll be able to configure your Gmail SMTP settings and add your resume link in the Settings page. These are required to start sending emails.
+          </p>
+        </div>
+
         <form onSubmit={handleSubmit}>
           <div className="mb-4">
             <label className="block text-gray-700 font-bold mb-2">Name</label>

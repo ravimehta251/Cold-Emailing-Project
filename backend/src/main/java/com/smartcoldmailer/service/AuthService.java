@@ -4,7 +4,9 @@ import com.smartcoldmailer.dto.SignupRequest;
 import com.smartcoldmailer.dto.LoginRequest;
 import com.smartcoldmailer.dto.AuthResponse;
 import com.smartcoldmailer.model.User;
+import com.smartcoldmailer.model.EmailTemplate;
 import com.smartcoldmailer.repository.UserRepository;
+import com.smartcoldmailer.repository.EmailTemplateRepository;
 import com.smartcoldmailer.security.JwtTokenProvider;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,6 +35,9 @@ public class AuthService {
     @Autowired
     private JwtTokenProvider jwtTokenProvider;
 
+    @Autowired
+    private EmailTemplateRepository emailTemplateRepository;
+
     public void logout(String userId) {
         log.info("Logout request for user ID: {}", userId);
         // Clear authentication from security context
@@ -57,6 +62,34 @@ public class AuthService {
         user.setCreatedAt(LocalDateTime.now());
         user.setUpdatedAt(LocalDateTime.now());
         user.setEmailsSentToday(0L);
+
+        // Create default email template for new user
+        try {
+            EmailTemplate defaultTemplate = new EmailTemplate();
+            defaultTemplate.setUserId(user.getId());
+            defaultTemplate.setName("Professional Cold Email");
+            defaultTemplate.setSubject("{{techSkill}} engineer interested in contributing to {{company}}'s engineering team");
+            defaultTemplate.setBody("Hi {{contactName}},\n\n" +
+                    "I came across {{company}}'s work in {{specificArea}} and was genuinely impressed — it's one of the reasons I'm reaching out.\n\n" +
+                    "I'm a {{role}} with hands-on experience in {{techSkill}} and a strong focus on {{keySkill}}. I've built {{relevantProject}}, which gave me deep practical experience in solving the kinds of problems your team works on.\n\n" +
+                    "A few quick links if you'd like to learn more:\n" +
+                    "  - Portfolio / GitHub: {{githubLink}}\n" +
+                    "  - LinkedIn: {{linkedinLink}}\n" +
+                    "  - Resume: {{resumeLink}}\n\n" +
+                    "I'd love to have a brief 15-minute call to explore whether there's a mutual fit. If you're open to it, feel free to suggest a time that works for you — or I'm happy to send over a few slots.\n\n" +
+                    "Thank you for your time, {{contactName}}.\n\n" +
+                    "Best regards,\n" +
+                    "{{yourName}}\n" +
+                    "{{yourEmail}} · {{yourPhone}}");
+            defaultTemplate.setIsDefault(true);
+            defaultTemplate.setCreatedAt(LocalDateTime.now());
+            defaultTemplate.setUpdatedAt(LocalDateTime.now());
+            emailTemplateRepository.save(defaultTemplate);
+            log.info("Default email template created for user: {}", user.getId());
+        } catch (Exception e) {
+            log.error("Failed to create default email template for user: {}", user.getId(), e);
+            // Don't fail the signup if template creation fails
+        }
 
         user = userRepository.save(user);
         log.info("User created successfully with ID: {}", user.getId());

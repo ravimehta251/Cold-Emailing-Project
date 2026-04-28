@@ -35,16 +35,21 @@ public class EmailTemplateEngine {
     public Map<String, String> createVariableMap(String name, String company, String role, com.smartcoldmailer.model.User sender) {
         Map<String, String> variables = new HashMap<>();
         variables.put("name", name != null ? name : "");
+        variables.put("contactName", name != null ? name : "");  // Alias for name
         variables.put("company", company != null ? company : "");
         variables.put("role", role != null ? role : "");
         
         if (sender != null) {
             variables.put("senderName", sender.getName() != null ? sender.getName() : "");
+            variables.put("yourName", sender.getName() != null ? sender.getName() : "");  // Alias for senderName
             variables.put("senderEmail", sender.getEmail() != null ? sender.getEmail() : "");
+            variables.put("yourEmail", sender.getEmail() != null ? sender.getEmail() : "");  // Alias for senderEmail
             variables.put("senderPhone", sender.getPhone() != null ? sender.getPhone() : "");
+            variables.put("yourPhone", sender.getPhone() != null ? sender.getPhone() : "");  // Alias for senderPhone
             variables.put("githubLink", sender.getGithubLink() != null ? sender.getGithubLink() : "");
             variables.put("linkedinLink", sender.getLinkedinLink() != null ? sender.getLinkedinLink() : "");
             variables.put("leetcodeLink", sender.getLeetcodeLink() != null ? sender.getLeetcodeLink() : "");
+            variables.put("resumeLink", sender.getResumeLink() != null ? sender.getResumeLink() : "");
             variables.put("techSkill", sender.getTechSkill() != null ? sender.getTechSkill() : "");
             variables.put("keySkill", sender.getKeySkill() != null ? sender.getKeySkill() : "");
             variables.put("specificArea", sender.getSpecificArea() != null ? sender.getSpecificArea() : "");
