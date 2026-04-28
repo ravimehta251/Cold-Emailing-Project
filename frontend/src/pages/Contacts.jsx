@@ -29,7 +29,6 @@ function VirtualizedContactsTable({ contacts, itemHeight = 65, containerHeight =
             <th className="text-left px-4 py-3 font-bold text-gray-700 border-b">Company</th>
             <th className="text-left px-4 py-3 font-bold text-gray-700 border-b">Role</th>
             <th className="text-left px-4 py-3 font-bold text-gray-700 border-b">Email</th>
-            <th className="text-left px-4 py-3 font-bold text-gray-700 border-b">Actions</th>
           </tr>
         </thead>
       </table>
@@ -52,20 +51,6 @@ function VirtualizedContactsTable({ contacts, itemHeight = 65, containerHeight =
                 <td className="px-4 py-3 text-gray-800 text-sm">{contact.company}</td>
                 <td className="px-4 py-3 text-gray-800 text-sm">{contact.role}</td>
                 <td className="px-4 py-3 text-gray-800 text-sm">{contact.email}</td>
-                <td className="px-4 py-3 text-sm flex gap-2">
-                  <button
-                    onClick={() => onEdit(contact)}
-                    className="bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600 text-xs"
-                  >
-                    Edit
-                  </button>
-                  <button
-                    onClick={() => onDelete(contact.id)}
-                    className="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600 text-xs"
-                  >
-                    Delete
-                  </button>
-                </td>
               </tr>
             ))}
           </tbody>
@@ -223,77 +208,10 @@ export default function Contacts() {
         </div>
       )}
 
-      {/* Action Buttons */}
-      <div className="mb-6 flex flex-wrap gap-2">
-        <button
-          onClick={() => setShowForm(!showForm)}
-          className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 font-semibold"
-        >
-          {showForm ? '✕ Cancel' : '➕ Add Contact'}
-        </button>
-        <label className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 cursor-pointer font-semibold">
-          📤 Bulk Upload CSV
-          <input
-            type="file"
-            accept=".csv"
-            onChange={handleBulkUpload}
-            className="hidden"
-          />
-        </label>
+      {/* INFO: Users cannot add or bulk upload new HR contacts */}
+      <div className="mb-6 p-4 bg-yellow-50 border-l-4 border-yellow-500 rounded">
+        <p className="text-yellow-800 font-semibold">📝 Note: You cannot add new HR contacts directly. To request a new HR contact, please contact the administrator.</p>
       </div>
-
-      {/* Add/Edit Form */}
-      {showForm && (
-        <div className="bg-gray-100 p-6 rounded mb-6 border-l-4 border-blue-600">
-          <h3 className="text-lg font-bold mb-4">{editing ? 'Update Contact' : 'Add New Contact'}</h3>
-          <form onSubmit={handleSubmit}>
-            <div className="grid grid-cols-2 gap-4 mb-4">
-              <input
-                type="text"
-                name="name"
-                placeholder="Name*"
-                value={formData.name}
-                onChange={handleChange}
-                className="px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                required
-              />
-              <input
-                type="text"
-                name="company"
-                placeholder="Company*"
-                value={formData.company}
-                onChange={handleChange}
-                className="px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                required
-              />
-              <input
-                type="text"
-                name="role"
-                placeholder="Role*"
-                value={formData.role}
-                onChange={handleChange}
-                className="px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                required
-              />
-              <input
-                type="email"
-                name="email"
-                placeholder="Email*"
-                value={formData.email}
-                onChange={handleChange}
-                className="px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                required
-              />
-            </div>
-            <button
-              type="submit"
-              className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 font-semibold"
-            >
-              {editing ? '✏️ Update' : '➕ Add'} Contact
-            </button>
-          </form>
-        </div>
-      )}
 
       {/* Search Box */}
       <div className="mb-4">
@@ -348,7 +266,6 @@ export default function Contacts() {
                 <th className="text-left px-4 py-3 font-bold text-gray-700 border-b">Company</th>
                 <th className="text-left px-4 py-3 font-bold text-gray-700 border-b">Role</th>
                 <th className="text-left px-4 py-3 font-bold text-gray-700 border-b">Email</th>
-                <th className="text-left px-4 py-3 font-bold text-gray-700 border-b">Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -361,20 +278,6 @@ export default function Contacts() {
                   <td className="px-4 py-3 text-gray-800">{contact.company}</td>
                   <td className="px-4 py-3 text-gray-800">{contact.role}</td>
                   <td className="px-4 py-3 text-gray-800">{contact.email}</td>
-                  <td className="px-4 py-3 flex gap-2">
-                    <button
-                      onClick={() => handleEdit(contact)}
-                      className="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600 text-sm font-semibold"
-                    >
-                      ✏️ Edit
-                    </button>
-                    <button
-                      onClick={() => handleDelete(contact.id)}
-                      className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 text-sm font-semibold"
-                    >
-                      🗑️ Delete
-                    </button>
-                  </td>
                 </tr>
               ))}
             </tbody>

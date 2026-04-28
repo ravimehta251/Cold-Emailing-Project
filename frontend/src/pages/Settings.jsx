@@ -234,9 +234,6 @@ export default function Settings() {
             <button type="submit" disabled={userSaving} className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 disabled:bg-gray-400">
               {userSaving ? 'Saving...' : 'Update Profile'}
             </button>
-            <button type="button" onClick={handleDeleteAccount} className="text-red-600 hover:text-red-800 text-sm font-semibold hover:underline">
-              Delete Account
-            </button>
           </div>
         </form>
       </div>
@@ -245,12 +242,6 @@ export default function Settings() {
       <div className="bg-white p-6 rounded shadow">
         <div className="flex justify-between items-center mb-4 border-b pb-2">
           <h2 className="text-2xl font-bold">Gmail SMTP Configuration</h2>
-          {smtpExists && !isSmtpEditing && (
-             <div className="space-x-3">
-               <button onClick={() => setIsSmtpEditing(true)} className="text-blue-600 hover:underline text-sm font-semibold">Edit</button>
-               <button onClick={handleDeleteSmtp} className="text-red-600 hover:underline text-sm font-semibold">Delete</button>
-             </div>
-          )}
         </div>
         
         {smtpError && <div className="bg-red-100 text-red-600 p-3 rounded mb-4">{smtpError}</div>}
@@ -258,19 +249,19 @@ export default function Settings() {
 
         <div className="bg-blue-50 border border-blue-200 rounded p-4 mb-6">
           <p className="text-sm text-blue-900">
-            <strong>⚠️ Disclaimer:</strong> Your SMTP credentials (email and password) are securely encrypted and stored on our servers. We never use your credentials for any purpose other than sending emails on your behalf. You can delete your SMTP configuration at any time.
+            <strong>⚠️ Disclaimer:</strong> Your SMTP credentials (email and password) are securely encrypted and stored on our servers. We never use your credentials for any purpose other than sending emails on your behalf.
           </p>
         </div>
 
         <form onSubmit={handleSmtpSubmit}>
           <div className="mb-4">
             <label className="block text-gray-700 font-bold mb-2">Gmail Address</label>
-            <input type="email" name="email" value={smtpData.email} onChange={handleSmtpChange} disabled={smtpExists && !isSmtpEditing} className="w-full px-3 py-2 border rounded disabled:bg-gray-100" placeholder="your-email@gmail.com" required />
+            <input type="email" name="email" value={smtpData.email} onChange={handleSmtpChange} disabled={smtpExists} className="w-full px-3 py-2 border rounded disabled:bg-gray-100" placeholder="your-email@gmail.com" required />
           </div>
 
           <div className="mb-6">
             <label className="block text-gray-700 font-bold mb-2">App Password</label>
-            <input type="password" name="appPassword" value={smtpData.appPassword} onChange={handleSmtpChange} disabled={smtpExists && !isSmtpEditing} className="w-full px-3 py-2 border rounded disabled:bg-gray-100" placeholder={smtpExists && !isSmtpEditing ? '••••••••' : '16-character App Password'} required={!smtpExists || isSmtpEditing} />
+            <input type="password" name="appPassword" value={smtpData.appPassword} onChange={handleSmtpChange} disabled={smtpExists} className="w-full px-3 py-2 border rounded disabled:bg-gray-100" placeholder={smtpExists ? '••••••••' : '16-character App Password'} required={!smtpExists} />
             <div className="bg-gray-50 border border-gray-200 rounded p-4 mt-3">
               <p className="text-sm text-gray-700 font-semibold mb-2">📋 How to get your Gmail App Password:</p>
               <ol className="text-sm text-gray-600 space-y-2 list-decimal list-inside">
@@ -285,16 +276,11 @@ export default function Settings() {
             </div>
           </div>
 
-          {(!smtpExists || isSmtpEditing) && (
+          {!smtpExists && (
             <div className="flex space-x-3">
               <button type="submit" disabled={smtpSaving} className="flex-1 bg-blue-600 text-white py-2 rounded hover:bg-blue-700">
                 {smtpSaving ? 'Saving...' : 'Save Configuration'}
               </button>
-              {smtpExists && (
-                <button type="button" onClick={() => {setIsSmtpEditing(false); setSmtpData(prev => ({...prev, appPassword: ''}))}} className="flex-1 bg-gray-500 text-white py-2 rounded hover:bg-gray-600">
-                  Cancel
-                </button>
-              )}
             </div>
           )}
         </form>
