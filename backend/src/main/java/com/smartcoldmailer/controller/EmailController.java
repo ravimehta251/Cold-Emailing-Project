@@ -24,7 +24,7 @@ import com.smartcoldmailer.security.UserPrincipal;
 @Slf4j
 @RestController
 @RequestMapping("/api/email")
-@CrossOrigin(origins = {"http://localhost:3000", "http://localhost:5173"})
+@CrossOrigin(origins = {"http://localhost:3000", "http://localhost:5173", "https://cold-emailing-project.vercel.app"})
 public class EmailController {
 
     @Autowired
