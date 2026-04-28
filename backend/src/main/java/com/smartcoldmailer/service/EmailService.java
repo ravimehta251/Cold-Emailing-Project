@@ -61,6 +61,19 @@ public class EmailService {
     public void sendBulkEmails(String userId, String templateId, String resumePath, List<String> contactIds, String subjectOverride, String bodyOverride, BulkEmailSession session) {
         log.info("Starting bulk email sending for user: {}", userId);
         
+        // Validate resume path if provided
+        String validatedResumePath = null;
+        if (resumePath != null && !resumePath.trim().isEmpty()) {
+            String normalizedPath = normalizeFilePath(resumePath);
+            java.io.File resumeFile = new java.io.File(normalizedPath);
+            if (resumeFile.exists() && resumeFile.isFile()) {
+                validatedResumePath = normalizedPath;
+                log.info("Resume file found and will be attached: {}", validatedResumePath);
+            } else {
+                log.warn("Resume file not found at path: {} (normalized: {}). Emails will be sent without attachment.", resumePath, normalizedPath);
+            }
+        }
+        
         try {
             // Validate SMTP config exists
             SMTPConfig smtpConfig;
@@ -114,7 +127,7 @@ public class EmailService {
             log.info("Sending emails to {} contacts", contacts.size());
 
             for (Contact contact : contacts) {
-                sendSingleEmail(userId, contact, template, smtpEmail, smtpPassword, resumePath, subjectOverride, bodyOverride, session);
+                sendSingleEmail(userId, contact, template, smtpEmail, smtpPassword, validatedResumePath, subjectOverride, bodyOverride, session);
                 
                 // Update session progress
                 session = bulkEmailSessionRepository.findById(session.getId()).orElse(session);
@@ -173,7 +186,8 @@ public class EmailService {
             String errorMessage = null;
             while (attempt < MAX_RETRIES && !success) {
                 try {
-                    if (resumePath != null && !resumePath.trim().isEmpty() && new java.io.File(resumePath).exists()) {
+                    if (resumePath != null && !resumePath.trim().isEmpty()) {
+                        log.info("Sending email with attachment: {}", resumePath);
                         emailSenderUtil.sendEmailWithAttachment(smtpEmail, smtpPassword, contact.getEmail(), subject, body, resumePath);
                     } else {
                         emailSenderUtil.sendEmail(smtpEmail, smtpPassword, contact.getEmail(), subject, body);
@@ -367,5 +381,41 @@ public class EmailService {
         }
         
         return response;
+    }
+
+    /**
+     * Normalize file path to handle both Windows and Unix paths
+     * Handles escaped characters and converts backslashes properly
+     */
+    private String normalizeFilePath(String path) {
+        if (path == null || path.trim().isEmpty()) {
+            return path;
+        }
+        
+        // Remove surrounding quotes if present
+        String normalized = path.trim();
+        if ((normalized.startsWith("\"") && normalized.endsWith("\"")) ||
+            (normalized.startsWith("'") && normalized.endsWith("'"))) {
+            normalized = normalized.substring(1, normalized.length() - 1);
+        }
+        
+        // Convert forward slashes to system-appropriate separator
+        // Java File class handles both / and \ on Windows, so this is mainly for consistency
+        normalized = normalized.replace("/", java.io.File.separator);
+        
+        // Try to handle escaped backslashes that might come from JSON
+        // But only if the current version doesn't exist
+        java.io.File testFile = new java.io.File(normalized);
+        if (!testFile.exists() && normalized.contains("\\\\")) {
+            // Try with single backslashes (in case they were double-escaped)
+            String singleBackslash = normalized.replace("\\\\", "\\");
+            java.io.File testFile2 = new java.io.File(singleBackslash);
+            if (testFile2.exists()) {
+                normalized = singleBackslash;
+            }
+        }
+        
+        log.debug("Normalized path from '{}' to '{}'", path, normalized);
+        return normalized;
     }
 }

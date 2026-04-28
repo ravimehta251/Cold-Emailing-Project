@@ -369,12 +369,16 @@ export default function SendEmails() {
             <label className="block text-gray-700 font-bold mb-2">Resume Path (Optional)</label>
             <input
               type="text"
-              placeholder="e.g. C:\Users\John\resume.pdf"
+              placeholder="e.g. C:\Users\John\resume.pdf or /Users/john/resume.pdf"
               value={resumePath}
               onChange={(e) => setResumePath(e.target.value)}
               disabled={sending}
               className="w-full px-3 py-2 border border-gray-300 rounded text-sm disabled:bg-gray-100"
             />
+            <p className="text-xs text-gray-500 mt-2">
+              ℹ️ Enter the full path to your resume file. Make sure the file exists at this location. 
+              Supports both Windows (C:\path\to\file) and Unix (/path/to/file) paths.
+            </p>
           </div>
 
           <button
