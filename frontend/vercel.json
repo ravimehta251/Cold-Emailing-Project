@@ -4,8 +4,8 @@
   "outputDirectory": "dist",
   "framework": "vite",
   "env": {
-    "VITE_APP_ENV": "production",
-    "VITE_API_URL": "https://cold-emailing-project.onrender.com"
+    "VITE_APP_ENV": "@vite_app_env",
+    "VITE_API_URL": "@vite_api_url"
   },
   "headers": [
     {
