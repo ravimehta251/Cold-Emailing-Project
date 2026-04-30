@@ -3,8 +3,8 @@ import { emailAPI, contactAPI, userAPI } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 
 const DEFAULT_CONNECTING_EMAIL = {
-  subject: 'Connecting regarding opportunities at {{company}}',
-  body: "Hi {{name}},\n\nI'm a developer with experience in {{techSkill}}, and I admire the work at {{company}}.\nI've built projects around {{specificArea}}.\nHere's my GitHub: {{githubLink}}\n\nWould love to connect and learn more.\n\nBest,\n{{senderName}}"
+  subject: 'Seeking Guidance from {{company}} Engineers',
+  body: "Hi {{name}},\n\nI'm a developer with experience in {{techSkill}}, and I admire the work at {{company}}.\n\nI am in search of internship opportunities and would greatly appreciate guidance from experienced engineers like you.\n\nI've built projects around {{specificArea}}.\nHere's my GitHub: {{githubLink}}\nHere's my LeetCode: {{leetcodeLink}}\n\nWould love to connect and learn more.\n\nBest,\n{{senderName}}"
 };
 
 const AVAILABLE_VARIABLES = [
@@ -40,6 +40,8 @@ export default function SendEmails() {
   const [emailLogs, setEmailLogs] = useState([]);
   const [filterStatus, setFilterStatus] = useState('ALL');
   const [searchQuery, setSearchQuery] = useState('');
+  const [contactPageIndex, setContactPageIndex] = useState(0);
+  const CONTACTS_PER_PAGE = 50;
 
   // Session tracking
   const [sessionId, setSessionId] = useState(null);
@@ -104,6 +106,11 @@ export default function SendEmails() {
     };
   }, [sessionId]);
 
+  // Reset page index when search or filter changes
+  useEffect(() => {
+    setContactPageIndex(0);
+  }, [searchQuery, filterStatus]);
+
   const fetchUserData = async () => {
     try {
       const uRes = await userAPI.getMe();
@@ -166,10 +173,57 @@ export default function SendEmails() {
       return {
         sent: true,
         status: log?.status || 'SENT',
-        color: log?.status === 'FAILED' ? 'red' : 'green'
+        color: log?.status === 'FAILED' ? 'red' : 'green',
+        isSuccessful: log?.status === 'SENT' || log?.status === 'SUCCESS'
       };
     }
-    return { sent: false, status: 'NOT_SENT', color: 'gray' };
+    return { sent: false, status: 'NOT_SENT', color: 'gray', isSuccessful: false };
+  };
+
+  // Get organized contacts with status grouping and pagination
+  const getOrganizedContacts = () => {
+    const unsuccessful = [];
+    const successful = [];
+    const allOthers = [];
+
+    getFilteredContacts().forEach(contact => {
+      const statusInfo = getContactStatus(contact.email);
+      if (statusInfo.sent && statusInfo.status === 'FAILED') {
+        unsuccessful.push(contact);
+      } else if (statusInfo.sent && statusInfo.isSuccessful) {
+        successful.push(contact);
+      } else {
+        allOthers.push(contact);
+      }
+    });
+
+    // Combine in the required order
+    const organized = [...unsuccessful, ...successful, ...allOthers];
+    
+    // Apply pagination
+    const startIndex = contactPageIndex * CONTACTS_PER_PAGE;
+    const endIndex = startIndex + CONTACTS_PER_PAGE;
+    return organized.slice(startIndex, endIndex);
+  };
+
+  const getTotalContactPages = () => {
+    const unsuccessful = [];
+    const successful = [];
+    const allOthers = [];
+
+    getFilteredContacts().forEach(contact => {
+      const statusInfo = getContactStatus(contact.email);
+      if (statusInfo.sent && statusInfo.status === 'FAILED') {
+        unsuccessful.push(contact);
+      } else if (statusInfo.sent && statusInfo.isSuccessful) {
+        successful.push(contact);
+      } else {
+        allOthers.push(contact);
+      }
+    });
+
+    const organized = [...unsuccessful, ...successful, ...allOthers];
+    return Math.ceil(organized.length / CONTACTS_PER_PAGE);
   };
 
   const handleContactToggle = (contactId) => {
@@ -181,11 +235,11 @@ export default function SendEmails() {
   };
 
   const handleSelectAll = () => {
-    const filteredIds = getFilteredContacts().map(c => c.id);
-    if (selectedContacts.length === filteredIds.length) {
+    const organizedIds = getOrganizedContacts().map(c => c.id);
+    if (selectedContacts.length === organizedIds.length) {
       setSelectedContacts([]);
     } else {
-      setSelectedContacts(filteredIds);
+      setSelectedContacts(organizedIds);
     }
   };
 
@@ -413,13 +467,13 @@ export default function SendEmails() {
           {/* Select Contacts Card */}
           <div className="bg-white p-6 rounded shadow flex-1 flex flex-col">
             <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-bold">Select Contacts</h2>
+              <h2 className="text-xl font-bold">Select Contacts (Page {contactPageIndex + 1}/{Math.max(1, getTotalContactPages())})</h2>
               <button 
                 onClick={handleSelectAll}
                 disabled={sending}
                 className="text-sm text-blue-600 hover:underline disabled:opacity-50"
               >
-                {selectedContacts.length === getFilteredContacts().length && getFilteredContacts().length > 0 ? 'Deselect All' : 'Select All'}
+                {selectedContacts.length === getOrganizedContacts().length && getOrganizedContacts().length > 0 ? 'Deselect All' : 'Select All'}
               </button>
             </div>
 
@@ -464,38 +518,150 @@ export default function SendEmails() {
               <p className="text-gray-500 flex-1">No contacts found. {searchQuery && 'Try a different search term.'}</p>
             ) : (
               <div className="flex-1 overflow-y-auto border border-gray-200 rounded p-2 max-h-80">
-                {getFilteredContacts().map(contact => {
-                  const statusInfo = getContactStatus(contact.email);
+                {(() => {
+                  const organizedContacts = getOrganizedContacts();
+                  const unsuccessful = organizedContacts.filter(c => {
+                    const status = getContactStatus(c.email);
+                    return status.sent && status.status === 'FAILED';
+                  });
+                  const successful = organizedContacts.filter(c => {
+                    const status = getContactStatus(c.email);
+                    return status.sent && status.isSuccessful;
+                  });
+                  const unsent = organizedContacts.filter(c => {
+                    const status = getContactStatus(c.email);
+                    return !status.sent;
+                  });
+
                   return (
-                    <label key={contact.id} className="flex items-center p-3 hover:bg-gray-50 cursor-pointer border-b last:border-b-0">
-                      <input 
-                        type="checkbox" 
-                        checked={selectedContacts.includes(contact.id)}
-                        onChange={() => handleContactToggle(contact.id)}
-                        disabled={sending}
-                        className="mr-3 h-4 w-4 disabled:opacity-50"
-                      />
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2">
-                          <p className="font-semibold text-gray-800">{contact.name}</p>
-                          <span className={`text-xs font-bold px-2 py-1 rounded ${
-                            statusInfo.color === 'green' ? 'bg-green-100 text-green-700' :
-                            statusInfo.color === 'red' ? 'bg-red-100 text-red-700' :
-                            'bg-gray-100 text-gray-700'
-                          }`}>
-                            {statusInfo.sent ? `✅ ${statusInfo.status}` : '📤 Not Sent'}
-                          </span>
+                    <>
+                      {/* Unsuccessful Section */}
+                      {unsuccessful.length > 0 && (
+                        <div className="mb-3">
+                          <div className="flex items-center gap-2 px-2 py-2 bg-red-50 border-b border-red-200 sticky top-0 z-10">
+                            <span className="text-red-700 font-bold text-sm">❌ Unsuccessful ({unsuccessful.length})</span>
+                          </div>
+                          {unsuccessful.map(contact => {
+                            const statusInfo = getContactStatus(contact.email);
+                            return (
+                              <label key={contact.id} className="flex items-center p-3 hover:bg-red-50 cursor-pointer border-b last:border-b-0">
+                                <input 
+                                  type="checkbox" 
+                                  checked={selectedContacts.includes(contact.id)}
+                                  onChange={() => handleContactToggle(contact.id)}
+                                  disabled={sending}
+                                  className="mr-3 h-4 w-4 disabled:opacity-50"
+                                />
+                                <div className="flex-1">
+                                  <div className="flex items-center gap-2">
+                                    <p className="font-semibold text-gray-800">{contact.name}</p>
+                                    <span className="text-xs font-bold px-2 py-1 rounded bg-red-100 text-red-700">
+                                      ❌ {statusInfo.status}
+                                    </span>
+                                  </div>
+                                  <p className="text-sm text-gray-500">{contact.email} • {contact.company}</p>
+                                </div>
+                              </label>
+                            );
+                          })}
                         </div>
-                        <p className="text-sm text-gray-500">{contact.email} • {contact.company}</p>
-                      </div>
-                    </label>
+                      )}
+
+                      {/* Successful Section */}
+                      {successful.length > 0 && (
+                        <div className="mb-3">
+                          <div className="flex items-center gap-2 px-2 py-2 bg-green-50 border-b border-green-200 sticky top-0 z-10">
+                            <span className="text-green-700 font-bold text-sm">✅ Successful ({successful.length})</span>
+                          </div>
+                          {successful.map(contact => {
+                            const statusInfo = getContactStatus(contact.email);
+                            return (
+                              <label key={contact.id} className="flex items-center p-3 hover:bg-green-50 cursor-pointer border-b last:border-b-0">
+                                <input 
+                                  type="checkbox" 
+                                  checked={selectedContacts.includes(contact.id)}
+                                  onChange={() => handleContactToggle(contact.id)}
+                                  disabled={sending}
+                                  className="mr-3 h-4 w-4 disabled:opacity-50"
+                                />
+                                <div className="flex-1">
+                                  <div className="flex items-center gap-2">
+                                    <p className="font-semibold text-gray-800">{contact.name}</p>
+                                    <span className="text-xs font-bold px-2 py-1 rounded bg-green-100 text-green-700">
+                                      ✅ {statusInfo.status}
+                                    </span>
+                                  </div>
+                                  <p className="text-sm text-gray-500">{contact.email} • {contact.company}</p>
+                                </div>
+                              </label>
+                            );
+                          })}
+                        </div>
+                      )}
+
+                      {/* Unsent Section */}
+                      {unsent.length > 0 && (
+                        <div>
+                          <div className="flex items-center gap-2 px-2 py-2 bg-gray-50 border-b border-gray-200 sticky top-0 z-10">
+                            <span className="text-gray-700 font-bold text-sm">📤 Not Sent ({unsent.length})</span>
+                          </div>
+                          {unsent.map(contact => {
+                            const statusInfo = getContactStatus(contact.email);
+                            return (
+                              <label key={contact.id} className="flex items-center p-3 hover:bg-gray-100 cursor-pointer border-b last:border-b-0">
+                                <input 
+                                  type="checkbox" 
+                                  checked={selectedContacts.includes(contact.id)}
+                                  onChange={() => handleContactToggle(contact.id)}
+                                  disabled={sending}
+                                  className="mr-3 h-4 w-4 disabled:opacity-50"
+                                />
+                                <div className="flex-1">
+                                  <div className="flex items-center gap-2">
+                                    <p className="font-semibold text-gray-800">{contact.name}</p>
+                                    <span className="text-xs font-bold px-2 py-1 rounded bg-gray-100 text-gray-700">
+                                      📤 Not Sent
+                                    </span>
+                                  </div>
+                                  <p className="text-sm text-gray-500">{contact.email} • {contact.company}</p>
+                                </div>
+                              </label>
+                            );
+                          })}
+                        </div>
+                      )}
+
+                      {/* Show warning if more than 50 contacts */}
+                      {getFilteredContacts().length > CONTACTS_PER_PAGE && (
+                        <div className="mt-4 flex justify-center items-center gap-2">
+                          <button
+                            onClick={() => setContactPageIndex(Math.max(0, contactPageIndex - 1))}
+                            disabled={contactPageIndex === 0 || sending}
+                            className="px-3 py-2 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 disabled:bg-gray-400 transition"
+                          >
+                            ← Previous
+                          </button>
+                          <span className="text-sm text-gray-600 font-semibold">
+                            Page {contactPageIndex + 1} of {getTotalContactPages()}
+                          </span>
+                          <button
+                            onClick={() => setContactPageIndex(Math.min(getTotalContactPages() - 1, contactPageIndex + 1))}
+                            disabled={contactPageIndex >= getTotalContactPages() - 1 || sending}
+                            className="px-3 py-2 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 disabled:bg-gray-400 transition"
+                          >
+                            Next →
+                          </button>
+                        </div>
+                      )}
+                    </>
                   );
-                })}
+                })()}
               </div>
             )}
 
             <div className="mt-4 text-sm text-gray-600">
-              Selected: <span className="font-bold text-blue-600">{selectedContacts.length}</span> / <span className="font-bold">{getFilteredContacts().length}</span>
+              <p>Selected: <span className="font-bold text-blue-600">{selectedContacts.length}</span> / <span className="font-bold">{getFilteredContacts().length}</span> total available</p>
+              <p className="text-xs text-gray-500 mt-1">📄 Showing {getOrganizedContacts().length} contacts on this page</p>
             </div>
           </div>
 
