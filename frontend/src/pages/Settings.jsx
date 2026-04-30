@@ -256,12 +256,12 @@ export default function Settings() {
         <form onSubmit={handleSmtpSubmit}>
           <div className="mb-4">
             <label className="block text-gray-700 font-bold mb-2">Gmail Address</label>
-            <input type="email" name="email" value={smtpData.email} onChange={handleSmtpChange} disabled={smtpExists} className="w-full px-3 py-2 border rounded disabled:bg-gray-100" placeholder="your-email@gmail.com" required />
+            <input type="email" name="email" value={smtpData.email} onChange={handleSmtpChange} disabled={smtpExists && !isSmtpEditing} className="w-full px-3 py-2 border rounded disabled:bg-gray-100" placeholder="your-email@gmail.com" required />
           </div>
 
           <div className="mb-6">
             <label className="block text-gray-700 font-bold mb-2">App Password</label>
-            <input type="password" name="appPassword" value={smtpData.appPassword} onChange={handleSmtpChange} disabled={smtpExists} className="w-full px-3 py-2 border rounded disabled:bg-gray-100" placeholder={smtpExists ? '••••••••' : '16-character App Password'} required={!smtpExists} />
+            <input type="password" name="appPassword" value={smtpData.appPassword} onChange={handleSmtpChange} disabled={smtpExists && !isSmtpEditing} className="w-full px-3 py-2 border rounded disabled:bg-gray-100" placeholder={smtpExists && !isSmtpEditing ? '••••••••' : '16-character App Password'} required={!smtpExists} />
             <div className="bg-gray-50 border border-gray-200 rounded p-4 mt-3">
               <p className="text-sm text-gray-700 font-semibold mb-2">📋 How to get your Gmail App Password:</p>
               <ol className="text-sm text-gray-600 space-y-2 list-decimal list-inside">
@@ -276,14 +276,62 @@ export default function Settings() {
             </div>
           </div>
 
-          {!smtpExists && (
-            <div className="flex space-x-3">
-              <button type="submit" disabled={smtpSaving} className="flex-1 bg-blue-600 text-white py-2 rounded hover:bg-blue-700">
+          <div className="flex space-x-3">
+            {!smtpExists ? (
+              <button type="submit" disabled={smtpSaving} className="flex-1 bg-blue-600 text-white py-2 rounded hover:bg-blue-700 disabled:bg-gray-400">
                 {smtpSaving ? 'Saving...' : 'Save Configuration'}
               </button>
-            </div>
-          )}
+            ) : (
+              <>
+                {!isSmtpEditing ? (
+                  <>
+                    <button 
+                      type="button"
+                      onClick={() => setIsSmtpEditing(true)} 
+                      className="flex-1 bg-orange-600 text-white py-2 rounded hover:bg-orange-700"
+                    >
+                      ✏️ Edit
+                    </button>
+                    <button 
+                      type="button"
+                      onClick={handleDeleteSmtp} 
+                      className="flex-1 bg-red-600 text-white py-2 rounded hover:bg-red-700"
+                    >
+                      🗑️ Delete
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <button 
+                      type="submit" 
+                      disabled={smtpSaving} 
+                      className="flex-1 bg-blue-600 text-white py-2 rounded hover:bg-blue-700 disabled:bg-gray-400"
+                    >
+                      {smtpSaving ? 'Updating...' : '💾 Update'}
+                    </button>
+                    <button 
+                      type="button"
+                      onClick={() => {
+                        setIsSmtpEditing(false);
+                        setSmtpData(prev => ({ ...prev, appPassword: '' }));
+                      }}
+                      className="flex-1 bg-gray-600 text-white py-2 rounded hover:bg-gray-700"
+                    >
+                      ❌ Cancel
+                    </button>
+                  </>
+                )}
+              </>
+            )}
+          </div>
         </form>
+
+        {smtpExists && (
+          <div className="mt-6 p-4 bg-gray-50 rounded border border-gray-200">
+            <p className="text-sm text-gray-700"><strong>Current Email:</strong> {smtpData.email}</p>
+            <p className="text-sm text-gray-600 mt-1">Click <strong>Edit</strong> to change your Gmail or update your App Password</p>
+          </div>
+        )}
       </div>
     </div>
   );

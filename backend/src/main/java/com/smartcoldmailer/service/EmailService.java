@@ -186,21 +186,48 @@ public class EmailService {
             String errorMessage = null;
             while (attempt < MAX_RETRIES && !success) {
                 try {
+                    attempt++;
                     if (resumePath != null && !resumePath.trim().isEmpty()) {
-                        log.info("Sending email with attachment: {}", resumePath);
+                        log.info("Sending email with attachment to {}: Attempt {}/{}", contact.getEmail(), attempt, MAX_RETRIES);
                         emailSenderUtil.sendEmailWithAttachment(smtpEmail, smtpPassword, contact.getEmail(), subject, body, resumePath);
                     } else {
+                        log.info("Sending email to {}: Attempt {}/{}", contact.getEmail(), attempt, MAX_RETRIES);
                         emailSenderUtil.sendEmail(smtpEmail, smtpPassword, contact.getEmail(), subject, body);
                     }
                     success = true;
-                } catch (Exception e) {
+                    log.info("Email successfully sent to {}", contact.getEmail());
+                } catch (RuntimeException e) {
+                    // Handle authentication and timeout errors - these are non-retryable
+                    if (e.getMessage() != null && (
+                        e.getMessage().contains("SMTP authentication failed") || 
+                        e.getMessage().contains("SMTP timeout") ||
+                        e.getMessage().contains("server not responding"))) {
+                        log.error("Non-retryable SMTP error on attempt {}: {}", attempt, e.getMessage());
+                        errorMessage = e.getMessage();
+                        break; // Don't retry auth/timeout failures
+                    }
                     errorMessage = e.getMessage();
-                    attempt++;
                     if (attempt < MAX_RETRIES) {
+                        log.warn("Attempt {} failed for {}: {}. Retrying in 5 seconds...", attempt, contact.getEmail(), e.getMessage());
                         try {
                             Thread.sleep(5000); // 5 seconds delay before retry
                         } catch (InterruptedException ie) {
                             Thread.currentThread().interrupt();
+                            break;
+                        }
+                    } else {
+                        log.error("All {} attempts failed for {}: {}", MAX_RETRIES, contact.getEmail(), e.getMessage());
+                    }
+                } catch (Exception e) {
+                    errorMessage = e.getMessage();
+                    log.error("Unexpected error on attempt {} for {}: {}", attempt, contact.getEmail(), e.getMessage(), e);
+                    if (attempt < MAX_RETRIES) {
+                        log.warn("Retrying email to {} (attempt {}/{})", contact.getEmail(), attempt, MAX_RETRIES);
+                        try {
+                            Thread.sleep(5000);
+                        } catch (InterruptedException ie) {
+                            Thread.currentThread().interrupt();
+                            break;
                         }
                     }
                 }
