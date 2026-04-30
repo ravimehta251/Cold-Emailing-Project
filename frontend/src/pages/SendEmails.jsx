@@ -47,6 +47,10 @@ export default function SendEmails() {
   const [sessionId, setSessionId] = useState(null);
   const [sessionProgress, setSessionProgress] = useState(null);
   const pollingRef = useRef(null);
+  const pollStartTimeRef = useRef(null);
+  const pollCountRef = useRef(0);
+  const MAX_POLL_DURATION_MS = 10 * 60 * 1000; // 10 minutes timeout
+  const MAX_POLL_COUNT = 300; // Maximum 300 polls (10 minutes at 2 second intervals)
 
   const bodyInputRef = useRef(null);
 
@@ -71,7 +75,24 @@ export default function SendEmails() {
   useEffect(() => {
     if (!sessionId) return;
 
+    pollStartTimeRef.current = Date.now();
+    pollCountRef.current = 0;
+
     const poll = async () => {
+      pollCountRef.current++;
+      const elapsedTime = Date.now() - pollStartTimeRef.current;
+
+      // Check if polling has exceeded maximum duration
+      if (pollCountRef.current > MAX_POLL_COUNT || elapsedTime > MAX_POLL_DURATION_MS) {
+        clearInterval(pollingRef.current);
+        setSending(false);
+        setError(`Email sending timed out after ${Math.floor(elapsedTime / 1000)} seconds. ` +
+          `Check your SMTP settings and Gmail account configuration (Less secure app access or app password may be required).`);
+        setSessionId(null);
+        console.warn(`Polling timeout reached after ${pollCountRef.current} polls (${Math.floor(elapsedTime / 1000)}s)`);
+        return;
+      }
+
       try {
         const response = await emailAPI.getSessionProgress(sessionId);
         setSessionProgress(response.data);
@@ -80,7 +101,11 @@ export default function SendEmails() {
         if (response.data.status === 'COMPLETED' || response.data.status === 'FAILED') {
           clearInterval(pollingRef.current);
           setSending(false);
-          setSuccess(`Email session completed! Sent: ${response.data.sentEmails}, Failed: ${response.data.failedEmails}`);
+          if (response.data.status === 'COMPLETED') {
+            setSuccess(`Email session completed! Sent: ${response.data.sentEmails}, Failed: ${response.data.failedEmails}`);
+          } else {
+            setError(`Email session failed: ${response.data.errorMessage || 'Unknown error'}`);
+          }
           setSessionId(null);
           
           // Refresh dashboard after completion
@@ -102,7 +127,9 @@ export default function SendEmails() {
     pollingRef.current = setInterval(poll, 2000);
 
     return () => {
-      if (pollingRef.current) clearInterval(pollingRef.current);
+      if (pollingRef.current) {
+        clearInterval(pollingRef.current);
+      }
     };
   }, [sessionId]);
 
