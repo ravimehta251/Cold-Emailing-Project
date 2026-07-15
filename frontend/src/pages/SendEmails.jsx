@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext';
 
 const DEFAULT_CONNECTING_EMAIL = {
   subject: 'Seeking Guidance from {{company}} Engineers',
-  body: "Hi {{name}},\n\nI'm a developer with experience in {{techSkill}}, and I admire the work at {{company}}.\n\nI am in search of internship opportunities and would greatly appreciate guidance from experienced engineers like you.\n\nI've built projects around {{specificArea}}.\nHere's my GitHub: {{githubLink}}\nHere's my LeetCode: {{leetcodeLink}}\n\nWould love to connect and learn more.\n\nBest,\n{{senderName}}"
+  body: "Hi {{name}},\n\nI'm a developer with experience in {{techSkill}}, and I admire the work at {{company}}.\n\nI am in search of internship opportunities and would greatly appreciate guidance from experienced engineers like you.\n\nI've built projects around {{specificArea}}.\nHere's my GitHub: {{githubLink}}\nHere's my LeetCode: {{leetcodeLink}}\n\nWould love to connect and learn more.\n\nBest,\n{{senderName}} ({{senderEmail}})\nResume: {{resumeLink}}"
 };
 
 const AVAILABLE_VARIABLES = [
@@ -14,6 +14,7 @@ const AVAILABLE_VARIABLES = [
   { key: 'senderName', label: 'Your Name', userField: 'name' },
   { key: 'senderEmail', label: 'Your Email', userField: 'email' },
   { key: 'senderPhone', label: 'Your Phone', userField: 'phone' },
+  { key: 'resumeLink', label: 'Resume Link', userField: 'resumeLink' },
   { key: 'githubLink', label: 'GitHub Link', userField: 'githubLink' },
   { key: 'linkedinLink', label: 'LinkedIn Link', userField: 'linkedinLink' },
   { key: 'leetcodeLink', label: 'LeetCode Link', userField: 'leetcodeLink' },
@@ -70,6 +71,13 @@ export default function SendEmails() {
       setBody(DEFAULT_CONNECTING_EMAIL.body);
     }
   }, [user]);
+
+  // Auto-populate resume path from settings when user data is loaded
+  useEffect(() => {
+    if (userData?.resumeLink && !resumePath) {
+      setResumePath(userData.resumeLink);
+    }
+  }, [userData?.resumeLink]);
 
   // Poll for session progress
   useEffect(() => {
